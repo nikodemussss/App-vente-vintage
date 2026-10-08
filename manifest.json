@@ -1,0 +1,16 @@
+json
+{
+  "name": "Mon Assistant Vide-Grenier",
+  "short_name": "VideGrenier",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "icone.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
