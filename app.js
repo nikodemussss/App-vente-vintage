@@ -1,11 +1,12 @@
 // ==========================================
-// ASSISTANT VIDE-GRENIER - GEMINI
+// ASSISTANT VIDE-GRENIER
+// Analyse photo + estimation réaliste
 // ==========================================
 
-// Mets ici ta nouvelle clé API Gemini
+// Ta clé API Gemini
 const CLE_API = "AQ.Ab8RN6KtJ7pU6tpg8x4aofAvmA1x1RT9ma_mu1UUShzV_0AD6g";
 
-// Modèle Gemini utilisé
+// Modèle Gemini
 const MODELE = "gemini-3.6-flash";
 
 // Nombre maximum de tentatives
@@ -44,17 +45,13 @@ inputPhoto.addEventListener("change", function () {
 
     const resultatLecture = evenement.target.result;
 
-    // Affichage de la photo
     preview.src = resultatLecture;
     preview.style.display = "block";
 
-    // Extraction du Base64
     imageBase64 = resultatLecture.split(",")[1];
 
-    // Conservation du véritable type d'image
     typeImage = fichier.type || "image/jpeg";
 
-    // Activation du bouton
     boutonAnalyser.disabled = false;
   };
 
@@ -63,7 +60,7 @@ inputPhoto.addEventListener("change", function () {
 
 
 // ==========================================
-// ATTENTE ENTRE DEUX TENTATIVES
+// FONCTION D'ATTENTE
 // ==========================================
 
 function attendre(milliseconds) {
@@ -76,7 +73,7 @@ function attendre(milliseconds) {
 
 
 // ==========================================
-// ANALYSE GEMINI
+// ANALYSE DE L'OBJET
 // ==========================================
 
 boutonAnalyser.addEventListener("click", async function () {
@@ -86,38 +83,110 @@ boutonAnalyser.addEventListener("click", async function () {
   }
 
   chargement.style.display = "block";
-  chargement.textContent = "⏳ Analyse en cours...";
   resultat.style.display = "none";
   boutonAnalyser.disabled = true;
 
+  chargement.textContent =
+    "⏳ Identification de l'objet...";
+
 
   // ========================================
-  // INSTRUCTIONS POUR GEMINI
+  // PROMPT EXPERT
   // ========================================
 
-  const instructions =
-    "Tu es un expert en objets anciens, objets de collection, brocante " +
-    "et vente sur eBay en France. " +
+  const instructions = `
 
-    "Analyse attentivement la photo de l'objet. " +
+Tu es un expert professionnel en brocante, antiquités,
+objets de collection, numismatique et vente d'occasion en France.
 
-    "Identifie l'objet, sa marque éventuelle, son époque, son modèle, " +
-    "ses caractéristiques visibles et son état apparent. " +
+Ta mission est d'analyser précisément l'objet visible sur la photo
+et de produire une estimation réaliste de son prix de vente.
 
-    "Ne prétends pas connaître une information qui n'est pas visible. " +
+IMPORTANT :
 
-    "Pour le prix, donne une estimation réaliste du prix de vente " +
-    "d'occasion en France, et non un prix neuf ou un prix fantasmé. " +
+Ne donne jamais une estimation basée uniquement sur une impression
+visuelle générale.
 
-    "Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant " +
-    "ou après le JSON. " +
+Tu dois d'abord identifier précisément l'objet.
 
-    "Utilise exactement cette structure : " +
+Si l'objet est une monnaie, médaille ou pièce numismatique,
+effectue une analyse spécifique.
 
-    "{\"objet\":\"nom de l'objet identifié\"," +
-    "\"titre_ebay\":\"titre optimisé pour une annonce eBay, 80 caractères maximum\"," +
-    "\"description_ebay\":\"description détaillée et attractive pour l'annonce, en français\"," +
-    "\"prix_estime\":\"fourchette réaliste en euros avec une courte justification\"}";
+Pour une monnaie, recherche mentalement et prends en compte :
+
+- valeur faciale
+- pays
+- année
+- atelier si identifiable
+- métal
+- titre du métal
+- poids
+- diamètre
+- variante éventuelle
+- rareté éventuelle
+- état apparent
+- valeur intrinsèque du métal
+- prix habituel entre particuliers
+- différence entre prix professionnel et prix de particulier
+
+Pour les monnaies en métal précieux, tu dois impérativement
+distinguer :
+
+1. valeur du métal
+2. valeur numismatique
+3. prix réaliste de vente entre particuliers
+
+Ne confonds jamais la valeur faciale historique avec la valeur
+actuelle de la pièce.
+
+Pour l'état, sois prudent.
+Ne classe pas une pièce en excellent état si la photo ne permet
+pas de le confirmer.
+
+Si plusieurs niveaux de prix sont possibles selon l'état,
+explique-le.
+
+Pour les autres objets, prends en compte :
+
+- marque
+- modèle
+- époque
+- matériau
+- fabrication
+- rareté
+- état
+- demande des collectionneurs
+- prix habituel sur le marché de l'occasion
+- prix de vente réaliste en France
+
+IMPORTANT POUR LE PRIX :
+
+Je veux un PRIX DE VENTE RÉALISTE, pas un prix théorique
+de catalogue et pas le prix maximal qu'un vendeur pourrait
+afficher.
+
+Si tu n'es pas certain de l'identification, indique clairement
+le niveau d'incertitude et élargis la fourchette.
+
+Si une caractéristique importante n'est pas visible sur la photo,
+ne l'invente jamais.
+
+Pour une pièce numismatique, si le prix dépend fortement de l'état,
+donne une fourchette réaliste correspondant à l'état visible.
+
+Réponds UNIQUEMENT avec un objet JSON valide.
+
+Utilise exactement cette structure :
+
+{
+  "objet": "identification précise de l'objet",
+  "titre_ebay": "titre optimisé pour eBay, maximum 80 caractères",
+  "description_ebay": "description détaillée et honnête de l'objet",
+  "prix_estime": "fourchette réaliste de prix de vente en euros",
+  "justification_prix": "explication courte et précise de l'estimation"
+}
+
+`;
 
 
   // ========================================
@@ -126,7 +195,11 @@ boutonAnalyser.addEventListener("click", async function () {
 
   let derniereErreur = null;
 
-  for (let tentative = 1; tentative <= MAX_TENTATIVES; tentative++) {
+  for (
+    let tentative = 1;
+    tentative <= MAX_TENTATIVES;
+    tentative++
+  ) {
 
     try {
 
@@ -136,26 +209,17 @@ boutonAnalyser.addEventListener("click", async function () {
           tentative === 2 ? 3 : 7;
 
         chargement.textContent =
-          "⏳ Gemini est très sollicité... nouvelle tentative dans " +
+          "🔄 Gemini est très sollicité. " +
+          "Nouvelle tentative dans " +
           secondes +
-          " secondes (" +
-          tentative +
-          "/" +
-          MAX_TENTATIVES +
-          ")";
+          " secondes...";
 
         await attendre(secondes * 1000);
       }
 
 
-      chargement.textContent =
-        tentative === 1
-          ? "⏳ Analyse en cours..."
-          : "🔄 Nouvelle tentative avec Gemini...";
-
-
       // ====================================
-      // APPEL À GEMINI
+      // APPEL GEMINI
       // ====================================
 
       const reponse = await fetch(
@@ -196,20 +260,21 @@ boutonAnalyser.addEventListener("click", async function () {
             ]
 
           })
+
         }
 
       );
 
 
       // ====================================
-      // LECTURE DE LA RÉPONSE
+      // RÉPONSE GEMINI
       // ====================================
 
       const donnees = await reponse.json();
 
 
       // ====================================
-      // SERVEUR GEMINI INDISPONIBLE
+      // ERREUR 503
       // ====================================
 
       if (reponse.status === 503) {
@@ -226,13 +291,12 @@ boutonAnalyser.addEventListener("click", async function () {
           MAX_TENTATIVES
         );
 
-        // On recommence automatiquement
         continue;
       }
 
 
       // ====================================
-      // AUTRE ERREUR API
+      // AUTRE ERREUR
       // ====================================
 
       if (!reponse.ok) {
@@ -297,7 +361,7 @@ boutonAnalyser.addEventListener("click", async function () {
 
 
       // ====================================
-      // CONVERSION EN JSON
+      // CONVERSION JSON
       // ====================================
 
       let json;
@@ -309,18 +373,18 @@ boutonAnalyser.addEventListener("click", async function () {
       } catch (erreurJSON) {
 
         console.error(
-          "Réponse reçue de Gemini :",
+          "Réponse Gemini :",
           texteReponse
         );
 
         throw new Error(
-          "Gemini a répondu, mais sa réponse n'est pas dans le format attendu."
+          "La réponse de Gemini n'est pas un JSON valide."
         );
       }
 
 
       // ====================================
-      // AFFICHAGE DU RÉSULTAT
+      // AFFICHAGE
       // ====================================
 
       document.getElementById("titre").value =
@@ -332,12 +396,23 @@ boutonAnalyser.addEventListener("click", async function () {
       document.getElementById("prix").value =
         json.prix_estime || "";
 
+
+      // ====================================
+      // AJOUT DE LA JUSTIFICATION
+      // ====================================
+
+      const justification =
+        json.justification_prix || "";
+
+      if (justification) {
+
+        document.getElementById("prix").value +=
+          "\n\nJustification : " +
+          justification;
+      }
+
+
       resultat.style.display = "block";
-
-
-      // ====================================
-      // SUCCÈS
-      // ====================================
 
       chargement.style.display = "none";
       boutonAnalyser.disabled = false;
@@ -356,8 +431,8 @@ boutonAnalyser.addEventListener("click", async function () {
 
       derniereErreur = erreur;
 
-      // Si ce n'est pas une erreur 503,
-      // inutile de recommencer automatiquement.
+      // Pour une erreur autre que 503,
+      // on arrête immédiatement.
       if (
         !erreur.message.includes("sollicité") &&
         !erreur.message.includes("503")
@@ -371,29 +446,17 @@ boutonAnalyser.addEventListener("click", async function () {
 
 
   // ========================================
-  // TOUTES LES TENTATIVES ONT ÉCHOUÉ
+  // ÉCHEC FINAL
   // ========================================
 
   chargement.style.display = "none";
   boutonAnalyser.disabled = false;
 
-
-  if (derniereErreur) {
-
-    alert(
-      "Gemini est actuellement indisponible.\n\n" +
-      "L'application a essayé automatiquement " +
-      MAX_TENTATIVES +
-      " fois.\n\n" +
-      "Détail : " +
-      derniereErreur.message
-    );
-
-  } else {
-
-    alert(
-      "Impossible d'obtenir une réponse de Gemini."
-    );
-  }
+  alert(
+    "Impossible d'obtenir l'analyse.\n\n" +
+    (derniereErreur
+      ? derniereErreur.message
+      : "Gemini est actuellement indisponible.")
+  );
 
 });
