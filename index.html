@@ -5,19 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon Assistant Vide-Grenier</title>
 <link rel="manifest" href="manifest.json">
+
 <style>
   body {
     font-family: Arial, sans-serif;
     max-width: 500px;
     margin: 0 auto;
     padding: 16px;
-    
+
     background-image: url("fond.jpg");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
   }
-  h1 { font-size: 20px; text-align: center; color: #333; }
+
+  h1 {
+    font-size: 20px;
+    text-align: center;
+    color: #333;
+  }
+
   #preview {
     width: 100%;
     max-height: 300px;
@@ -26,7 +33,11 @@
     margin: 12px 0;
     display: none;
   }
-  input[type="file"] { display: none; }
+
+  input[type="file"] {
+    display: none;
+  }
+
   .btn {
     display: block;
     width: 100%;
@@ -40,7 +51,11 @@
     text-align: center;
     cursor: pointer;
   }
-  .btn:disabled { background: #93c5fd; }
+
+  .btn:disabled {
+    background: #93c5fd;
+  }
+
   #resultat {
     background: white;
     border-radius: 8px;
@@ -48,7 +63,12 @@
     margin-top: 16px;
     display: none;
   }
-  #resultat h2 { font-size: 16px; margin-top: 0; }
+
+  #resultat h2 {
+    font-size: 16px;
+    margin-top: 0;
+  }
+
   #resultat textarea {
     width: 100%;
     box-sizing: border-box;
@@ -56,9 +76,15 @@
     font-size: 14px;
     padding: 8px;
   }
-  #chargement { text-align: center; display: none; margin: 16px 0; }
+
+  #chargement {
+    text-align: center;
+    display: none;
+    margin: 16px 0;
+  }
 </style>
 </head>
+
 <body>
 
 <h1>📦 Mon Assistant Vide-Grenier</h1>
@@ -68,9 +94,13 @@
 <label for="photo" class="btn">📷 Prendre une photo</label>
 <input type="file" id="photo" accept="image/*" capture="environment">
 
-<button id="analyser" class="btn" disabled>✨ Analyser cet objet</button>
+<button id="analyser" class="btn" disabled>
+  ✨ Analyser cet objet
+</button>
 
-<div id="chargement">⏳ Analyse en cours...</div>
+<div id="chargement">
+  ⏳ Analyse en cours...
+</div>
 
 <div id="resultat">
   <h2>Titre de l'annonce</h2>
@@ -84,7 +114,6 @@
 </div>
 
 <script src="app.js"></script>
+
 </body>
 </html>
-
-
