@@ -6,7 +6,7 @@
 const CLE_API = "AQ.Ab8RN6KtJ7pU6tpg8x4aofAvmA1x1RT9ma_mu1UUShzV_0AD6g";
 
 // Modèle Gemini utilisé
-const MODELE = "gemini-3.8-flash";
+const MODELE = "gemini-3.6-flash";
 
 // Nombre maximum de tentatives
 const MAX_TENTATIVES = 3;
