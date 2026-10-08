@@ -1,11 +1,16 @@
 // ==========================================
 // MON ASSISTANT VIDE-GRENIER
+// Analyse + recherche de prix sur Internet
 // ==========================================
 
-// ⚠️ METS TA CLÉ API GEMINI ENTRE LES GUILLEMETS
+// ⚠️ METS TA CLÉ API GEMINI ICI
 const CLE_API = "AQ.Ab8RN6KtJ7pU6tpg8x4aofAvmA1x1RT9ma_mu1UUShzV_0AD6g";
 
-// Modèles essayés automatiquement, du plus puissant au plus léger
+
+// ==========================================
+// CASCADE DES MODÈLES
+// ==========================================
+
 const MODELES = [
   "gemini-3.8-flash",
   "gemini-3.7-flash",
@@ -13,6 +18,11 @@ const MODELES = [
   "gemini-3.5-flash",
   "gemini-3.5-flash-lite"
 ];
+
+
+// ==========================================
+// ÉLÉMENTS DE LA PAGE
+// ==========================================
 
 const inputPhoto = document.getElementById("photo");
 const preview = document.getElementById("preview");
@@ -65,10 +75,10 @@ inputPhoto.addEventListener("change", function () {
 
 
 // ==========================================
-// REQUÊTE AVEC DÉLAI MAXIMUM
+// REQUÊTE AVEC TIMEOUT
 // ==========================================
 
-async function envoyerRequete(url, options, delai = 30000) {
+async function envoyerRequete(url, options, delai = 45000) {
 
   const controleur = new AbortController();
 
@@ -91,78 +101,231 @@ async function envoyerRequete(url, options, delai = 30000) {
 
 
 // ==========================================
-// INSTRUCTIONS POUR GEMINI
+// CONSIGNE PRINCIPALE
 // ==========================================
 
 const instructions = `
-Tu es un expert français en brocante, objets anciens,
-objets de collection, numismatique et vente sur eBay.
 
-Analyse attentivement la photographie.
+Tu es un expert français en brocante, antiquités,
+objets de collection et vente entre particuliers.
 
-IDENTIFICATION :
+Tu dois analyser la photographie puis rechercher sur Internet
+des références de prix afin de produire une estimation réaliste.
+
+==================================================
+ÉTAPE 1 — IDENTIFICATION
+==================================================
 
 Identifie l'objet le plus précisément possible.
 
-Pour une monnaie, indique notamment :
+Cherche notamment :
+
+- marque
+- fabricant
+- modèle
+- référence
+- numéro
+- année
+- époque
+- matière
+- dimensions éventuelles
+- variante
+- édition
+- série
+- pays
+- caractéristiques particulières
+
+Pour une monnaie :
+
 - pays
 - valeur faciale
 - année
 - type exact
 - métal
 - titre du métal si connu
-- poids théorique si connu
-- particularités
+- poids théorique
+- variante éventuelle
 - état apparent
 
-Pour les autres objets :
+Pour un jeu vidéo :
+
+- plateforme
+- titre exact
+- édition
+- région
+- version
+- présence éventuelle du manuel
+- état
+
+Pour un objet de marque :
+
 - marque
 - modèle
 - référence
+- version
 - époque
-- matière
-- caractéristiques visibles
-- état apparent
 
-NE PAS INVENTER une information qui n'est pas visible
-ou suffisamment certaine.
+NE PAS inventer une référence ou une caractéristique
+qui n'est pas visible ou suffisamment certaine.
 
-PRIX :
+==================================================
+ÉTAPE 2 — RECHERCHE INTERNET
+==================================================
 
-Donne une estimation réaliste du prix auquel un particulier
-pourrait réellement vendre cet objet en France.
+Une fois l'objet identifié, utilise la recherche Google disponible
+pour trouver des références de prix réelles et récentes.
 
-Ne prends pas simplement comme référence les prix demandés
-dans des annonces très élevées.
+La recherche doit être adaptée à l'objet identifié.
 
-Pour une monnaie en métal précieux, prends en compte :
-- le poids
-- le titre du métal
-- la valeur intrinsèque du métal
-- l'année
-- la rareté éventuelle
-- la demande des collectionneurs
-- l'état apparent
+Recherche en priorité :
 
-Le prix doit correspondre à une vente réaliste entre particuliers.
+- eBay France
+- Delcampe
+- Catawiki
+- Etsy
+- Rakuten
+- sites spécialisés dans la catégorie de l'objet
+- résultats de ventes aux enchères
+- autres marketplaces pertinentes
+
+Utilise plusieurs recherches différentes si nécessaire.
+
+Par exemple :
+
+"nom exact de l'objet vendu"
+
+"nom exact de l'objet prix"
+
+"nom exact de l'objet eBay"
+
+"nom exact de l'objet vendu eBay"
+
+"marque modèle prix occasion"
+
+Adapte évidemment les recherches à l'objet réellement identifié.
+
+==================================================
+ÉTAPE 3 — COMPARAISON
+==================================================
+
+Compare les résultats trouvés.
+
+PRIORITÉ ABSOLUE :
+
+1. ventes réellement réalisées lorsque cette information
+   est disponible ;
+2. résultats d'enchères terminées ;
+3. prix observés sur plusieurs marketplaces ;
+4. annonces actuellement en vente seulement en dernier recours.
+
+Ne considère PAS qu'un objet vaut le prix demandé
+par un vendeur simplement parce qu'une annonce affiche
+un prix élevé.
+
+Écarte :
+
+- les objets différents ;
+- les variantes différentes ;
+- les années différentes lorsque l'année a une importance ;
+- les éditions différentes ;
+- les lots lorsque nous cherchons le prix d'une unité ;
+- les objets neufs lorsque notre objet est d'occasion ;
+- les prix manifestement aberrants ;
+- les annonces qui ne correspondent pas réellement
+  à l'objet photographié.
+
+Si seulement quelques références sont disponibles,
+indique-le et réduis ta confiance dans l'estimation.
+
+==================================================
+ÉTAPE 4 — ESTIMATION
+==================================================
+
+Détermine ensuite une fourchette de prix réaliste
+pour une vente entre particuliers en France.
+
+Je veux savoir :
+
+- combien je peux raisonnablement en demander ;
+- combien l'objet peut réellement se vendre ;
+- si l'objet est susceptible d'être négocié.
+
+Ne donne PAS systématiquement une fourchette basse.
+
+Si les références trouvées montrent qu'un objet se vend
+40 à 50 €, indique 40-50 € même si ta connaissance générale
+aurait donné une valeur inférieure.
+
+Pour les objets en métal précieux :
+
+prends également en compte la valeur intrinsèque du métal,
+mais ne limite pas automatiquement le prix à cette valeur
+si le marché collectionneur est supérieur.
+
+Pour les objets rares ou recherchés :
+
+la valeur de collection peut être nettement supérieure
+à la valeur matérielle.
+
+==================================================
+ÉTAPE 5 — RECOMMANDATION EBAY
+==================================================
+
+Donne également un prix de mise en vente conseillé.
+
+Ce prix doit permettre :
+
+- une vente réaliste ;
+- une petite marge de négociation ;
+- d'éviter de sous-évaluer fortement l'objet.
+
+==================================================
+RÉPONSE
+==================================================
 
 Réponds UNIQUEMENT avec un JSON valide.
+
 Aucun texte avant ou après le JSON.
 
 Format obligatoire :
 
 {
-  "objet": "identification précise",
-  "titre_ebay": "titre eBay de 80 caractères maximum",
-  "description_ebay": "description détaillée en français",
-  "prix_estime": "fourchette réaliste en euros",
-  "justification_prix": "courte justification du prix"
+  "objet": "identification précise de l'objet",
+
+  "titre_ebay": "titre optimisé pour eBay, maximum 80 caractères",
+
+  "description_ebay": "description détaillée et honnête en français",
+
+  "prix_estime": "fourchette réaliste de vente en euros",
+
+  "prix_mise_en_vente": "prix conseillé pour commencer l'annonce",
+
+  "justification_prix": "explication courte basée sur les comparables trouvés",
+
+  "nombre_comparables": "nombre approximatif de références pertinentes trouvées",
+
+  "comparables": [
+    {
+      "site": "nom du site",
+      "description": "objet comparable",
+      "prix": "prix observé",
+      "type": "vente réalisée, enchère terminée ou annonce"
+    }
+  ]
 }
+
+IMPORTANT :
+
+Le prix final doit être basé en priorité sur les références
+de marché trouvées pendant cette recherche.
+
+Ne donne jamais une estimation uniquement basée sur ta mémoire
+si des références Internet pertinentes sont disponibles.
 `;
 
 
 // ==========================================
-// ANALYSE DE LA PHOTO
+// ANALYSE
 // ==========================================
 
 boutonAnalyser.addEventListener("click", async function () {
@@ -180,28 +343,30 @@ boutonAnalyser.addEventListener("click", async function () {
   boutonAnalyser.disabled = true;
 
 
-  let dernierErreur = null;
   let resultatFinal = null;
+  let dernierErreur = null;
+  let modeleUtilise = null;
 
 
   try {
 
     // ======================================
-    // ESSAI DES MODÈLES UN PAR UN
+    // CASCADE DES MODÈLES
     // ======================================
 
     for (let i = 0; i < MODELES.length; i++) {
 
       const modele = MODELES[i];
 
+
       chargement.textContent =
-        "🔎 Analyse avec Gemini " +
+        "🔎 Identification + recherche avec " +
         modele.replace("gemini-", "") +
         "…";
 
 
       console.log(
-        "Tentative avec le modèle :",
+        "Tentative Gemini :",
         modele
       );
 
@@ -216,7 +381,9 @@ boutonAnalyser.addEventListener("click", async function () {
       try {
 
         const reponse = await envoyerRequete(
+
           url,
+
           {
             method: "POST",
 
@@ -245,13 +412,28 @@ boutonAnalyser.addEventListener("click", async function () {
                 }
               ],
 
+
+              // ==================================
+              // RECHERCHE GOOGLE
+              // ==================================
+
+              tools: [
+                {
+                  google_search: {}
+                }
+              ],
+
+
               generationConfig: {
-                maxOutputTokens: 2000
+                maxOutputTokens: 5000
               }
 
             })
+
           },
-          30000
+
+          45000
+
         );
 
 
@@ -265,7 +447,7 @@ boutonAnalyser.addEventListener("click", async function () {
 
 
         // ==================================
-        // MODÈLE DISPONIBLE
+        // RÉPONSE OK
         // ==================================
 
         if (reponse.ok) {
@@ -274,8 +456,7 @@ boutonAnalyser.addEventListener("click", async function () {
             !donnees.candidates ||
             !donnees.candidates[0] ||
             !donnees.candidates[0].content ||
-            !donnees.candidates[0].content.parts ||
-            !donnees.candidates[0].content.parts[0]
+            !donnees.candidates[0].content.parts
           ) {
 
             throw new Error(
@@ -284,11 +465,32 @@ boutonAnalyser.addEventListener("click", async function () {
           }
 
 
-          resultatFinal =
-            donnees.candidates[0]
-              .content
-              .parts[0]
-              .text;
+          const parties =
+            donnees.candidates[0].content.parts;
+
+
+          // Gemini peut retourner plusieurs parties
+          // lorsque la recherche Google est utilisée.
+
+          resultatFinal = parties
+            .filter(function (partie) {
+              return partie.text;
+            })
+            .map(function (partie) {
+              return partie.text;
+            })
+            .join("\n");
+
+
+          if (!resultatFinal) {
+
+            throw new Error(
+              "Gemini n'a renvoyé aucun texte exploitable."
+            );
+          }
+
+
+          modeleUtilise = modele;
 
 
           console.log(
@@ -306,20 +508,21 @@ boutonAnalyser.addEventListener("click", async function () {
         // ==================================
 
         if (
-          reponse.status === 503 ||
           reponse.status === 429 ||
-          reponse.status === 500
+          reponse.status === 500 ||
+          reponse.status === 503
         ) {
 
           dernierErreur =
             donnees?.error?.message ||
             "Serveur momentanément indisponible.";
 
+
           console.warn(
             modele +
             " indisponible (" +
             reponse.status +
-            "). Passage au modèle suivant."
+            "). Passage au suivant."
           );
 
 
@@ -328,7 +531,7 @@ boutonAnalyser.addEventListener("click", async function () {
 
 
         // ==================================
-        // CLÉ API INCORRECTE
+        // AUTHENTIFICATION
         // ==================================
 
         if (
@@ -339,7 +542,7 @@ boutonAnalyser.addEventListener("click", async function () {
           throw new Error(
             "Clé API refusée par Google (" +
             reponse.status +
-            "). Vérifie ta clé API Gemini."
+            "). Vérifie ta clé API."
           );
         }
 
@@ -361,18 +564,15 @@ boutonAnalyser.addEventListener("click", async function () {
         );
 
 
-        // Timeout : on passe au modèle suivant
         if (erreurModele.name === "AbortError") {
 
           dernierErreur =
-            "Le modèle a dépassé le délai de réponse.";
+            "Le modèle a dépassé 45 secondes.";
 
           continue;
         }
 
 
-        // Erreur d'authentification :
-        // inutile d'essayer les autres modèles.
         if (
           erreurModele.message.includes("401") ||
           erreurModele.message.includes("403") ||
@@ -383,7 +583,9 @@ boutonAnalyser.addEventListener("click", async function () {
         }
 
 
-        dernierErreur = erreurModele.message;
+        dernierErreur =
+          erreurModele.message;
+
 
         continue;
       }
@@ -391,14 +593,13 @@ boutonAnalyser.addEventListener("click", async function () {
 
 
     // ======================================
-    // AUCUN MODÈLE N'A RÉPONDU
+    // AUCUNE RÉPONSE
     // ======================================
 
     if (!resultatFinal) {
 
       throw new Error(
         "Aucun modèle Gemini n'a pu répondre.\n\n" +
-        "Les serveurs sont probablement momentanément saturés.\n\n" +
         "Dernière erreur : " +
         (dernierErreur || "inconnue")
       );
@@ -406,12 +607,14 @@ boutonAnalyser.addEventListener("click", async function () {
 
 
     // ======================================
-    // NETTOYAGE DU JSON
+    // NETTOYAGE
     // ======================================
 
     let texteNettoye =
       resultatFinal.trim();
 
+
+    // Retire les éventuelles balises Markdown.
 
     texteNettoye =
       texteNettoye
@@ -420,6 +623,10 @@ boutonAnalyser.addEventListener("click", async function () {
         .replace(/\s*```$/i, "")
         .trim();
 
+
+    // ======================================
+    // EXTRACTION DU JSON
+    // ======================================
 
     let json;
 
@@ -431,18 +638,50 @@ boutonAnalyser.addEventListener("click", async function () {
     } catch (erreurJSON) {
 
       console.error(
-        "Réponse reçue mais JSON incorrect :",
+        "JSON reçu :",
         resultatFinal
       );
 
-      throw new Error(
-        "Gemini a répondu, mais son résultat n'est pas exploitable."
-      );
+
+      // Tentative de récupération si Gemini
+      // a ajouté du texte autour du JSON.
+
+      const debut =
+        texteNettoye.indexOf("{");
+
+      const fin =
+        texteNettoye.lastIndexOf("}");
+
+
+      if (debut !== -1 && fin !== -1) {
+
+        try {
+
+          json = JSON.parse(
+            texteNettoye.substring(
+              debut,
+              fin + 1
+            )
+          );
+
+        } catch (deuxiemeErreur) {
+
+          throw new Error(
+            "Gemini a répondu, mais son résultat n'est pas exploitable."
+          );
+        }
+
+      } else {
+
+        throw new Error(
+          "Gemini a répondu, mais son résultat n'est pas exploitable."
+        );
+      }
     }
 
 
     // ======================================
-    // AFFICHAGE DES RÉSULTATS
+    // AFFICHAGE
     // ======================================
 
     document.getElementById("titre").value =
@@ -456,12 +695,39 @@ boutonAnalyser.addEventListener("click", async function () {
 
 
     document.getElementById("prix").value =
-      (json.prix_estime || "Non disponible") +
-      "\n\n" +
-      (json.justification_prix || "");
+
+      (json.prix_estime ||
+        "Non disponible")
+
+      + "\n\nPrix de mise en vente conseillé : " +
+
+      (json.prix_mise_en_vente ||
+        "Non disponible")
+
+      + "\n\n" +
+
+      (json.justification_prix ||
+        "")
+
+      + "\n\nComparables trouvés : " +
+
+      (json.nombre_comparables ||
+        "non précisé");
 
 
     resultat.style.display = "block";
+
+
+    console.log(
+      "Modèle utilisé :",
+      modeleUtilise
+    );
+
+
+    console.log(
+      "Comparables :",
+      json.comparables
+    );
 
 
   } catch (erreur) {
@@ -481,6 +747,7 @@ boutonAnalyser.addEventListener("click", async function () {
   } finally {
 
     chargement.style.display = "none";
+
     boutonAnalyser.disabled = false;
   }
 
