@@ -1,6 +1,7 @@
 // ==========================================
 // MON ASSISTANT VIDE-GRENIER
 // VERSION 100 % GRATUITE
+// AVEC FONDS BROCANTE ALÉATOIRES
 // ==========================================
 
 // ⚠️ METS TA CLÉ API ICI
@@ -9,9 +10,6 @@ const CLE_API = "AQ.Ab8RN6KtJ7pU6tpg8x4aofAvmA1x1RT9ma_mu1UUShzV_0AD6g";
 // ==========================================
 // UN SEUL MODÈLE
 // ==========================================
-
-// On utilise uniquement le modèle léger afin de limiter
-// au maximum la consommation du quota gratuit.
 
 const MODELE = "gemini-3.5-flash-lite";
 
@@ -29,6 +27,65 @@ let imageBase64 = null;
 let mimeType = "image/jpeg";
 
 // ==========================================
+// FOND BROCANTE ALÉATOIRE
+// ==========================================
+
+let dernierFond = 0;
+
+function changerFond() {
+
+  let numero;
+
+  // Choisit un numéro entre 1 et 36
+  // en évitant de reprendre immédiatement
+  // le même fond
+  do {
+    numero = Math.floor(Math.random() * 36) + 1;
+  } while (numero === dernierFond);
+
+  dernierFond = numero;
+
+  // Transforme 1 en 01, 2 en 02, etc.
+  const numeroFormate =
+    String(numero).padStart(2, "0");
+
+  // Chemin exact de l'image
+  const chemin =
+    "fonds/brocante (" +
+    numeroFormate +
+    ").jpg";
+
+  // Fond de la page avec un léger voile sombre
+  document.documentElement.style.backgroundImage =
+    'linear-gradient(rgba(0,0,0,0.30), rgba(0,0,0,0.30)), url("' +
+    chemin +
+    '")';
+
+  document.documentElement.style.backgroundSize =
+    "cover";
+
+  document.documentElement.style.backgroundPosition =
+    "center";
+
+  document.documentElement.style.backgroundAttachment =
+    "fixed";
+
+  document.documentElement.style.backgroundRepeat =
+    "no-repeat";
+
+  // Rend le fond blanc de l'application légèrement transparent
+  // afin de laisser apparaître l'image derrière.
+  document.body.style.backgroundColor =
+    "rgba(255,255,255,0.82)";
+}
+
+// ==========================================
+// PREMIER FOND AU DÉMARRAGE
+// ==========================================
+
+changerFond();
+
+// ==========================================
 // CHOIX DE LA PHOTO
 // ==========================================
 
@@ -36,33 +93,42 @@ inputPhoto.addEventListener("change", function () {
 
   const fichier = inputPhoto.files[0];
 
-  if (!fichier) {
-    return;
-  }
+  if (!fichier) return;
 
-  mimeType = fichier.type || "image/jpeg";
+  mimeType =
+    fichier.type || "image/jpeg";
 
   const lecteur = new FileReader();
 
   lecteur.onload = function (evenement) {
 
-    const resultatLecture = evenement.target.result;
+    const resultatLecture =
+      evenement.target.result;
 
-    preview.src = resultatLecture;
-    preview.style.display = "block";
+    preview.src =
+      resultatLecture;
 
-    imageBase64 = resultatLecture.split(",")[1];
+    preview.style.display =
+      "block";
 
-    boutonAnalyser.disabled = false;
+    imageBase64 =
+      resultatLecture.split(",")[1];
+
+    boutonAnalyser.disabled =
+      false;
   };
 
   lecteur.onerror = function () {
 
-    alert("Impossible de lire la photo.");
+    alert(
+      "Impossible de lire la photo."
+    );
 
-    imageBase64 = null;
+    imageBase64 =
+      null;
 
-    boutonAnalyser.disabled = true;
+    boutonAnalyser.disabled =
+      true;
   };
 
   lecteur.readAsDataURL(fichier);
@@ -72,20 +138,32 @@ inputPhoto.addEventListener("change", function () {
 // TIMEOUT
 // ==========================================
 
-async function envoyerRequete(url, options, delai = 60000) {
+async function envoyerRequete(
+  url,
+  options,
+  delai = 60000
+) {
 
-  const controleur = new AbortController();
+  const controleur =
+    new AbortController();
 
-  const timer = setTimeout(function () {
-    controleur.abort();
-  }, delai);
+  const timer =
+    setTimeout(function () {
+
+      controleur.abort();
+
+    }, delai);
 
   try {
 
-    return await fetch(url, {
-      ...options,
-      signal: controleur.signal
-    });
+    return await fetch(
+      url,
+      {
+        ...options,
+        signal:
+          controleur.signal
+      }
+    );
 
   } finally {
 
@@ -274,501 +352,4 @@ Pour l'or, l'argent ou d'autres matières précieuses :
 
 la valeur du matériau est seulement un élément.
 
-NE transforme PAS automatiquement :
-
-valeur du métal = prix de vente.
-
-Un objet de collection peut valoir largement plus
-que sa valeur matière.
-
-Exemple :
-
-si une monnaie contient 20 € d'argent mais que son marché
-de collection la place autour de 40 €, l'estimation doit
-être autour de 40 €, pas 20 €.
-
-==================================================
-5. COMPARABILITÉ
-==================================================
-
-Lorsque tu connais des prix de marché, privilégie les objets :
-
-- même modèle
-- même référence
-- même année lorsque nécessaire
-- même édition
-- même version
-- même plateforme
-- même taille
-- même matière
-- même état
-- même niveau de complétude
-
-Ne compare pas des objets simplement parce qu'ils
-se ressemblent.
-
-==================================================
-6. ÉTAT
-==================================================
-
-Estime l'état visible :
-
-- neuf
-- comme neuf
-- très bon état
-- bon état
-- état correct
-- usagé
-- mauvais état
-
-Mentionne les défauts visibles.
-
-==================================================
-7. FOURCHETTE
-==================================================
-
-Donne une fourchette réaliste.
-
-Ne donne pas systématiquement une estimation basse.
-
-Si un objet vaut probablement 40 à 50 €,
-indique 40 à 50 €.
-
-Ne cherche pas à être systématiquement prudent
-en sous-évaluant l'objet.
-
-==================================================
-8. PRIX EBAY
-==================================================
-
-Donne également un prix de mise en vente conseillé.
-
-Il peut être légèrement supérieur au prix de vente
-probable afin de permettre une négociation.
-
-Exemple :
-
-vente probable : 40-45 €
-
-mise en vente conseillée : 49,90 €
-
-Mais ne gonfle pas artificiellement le prix.
-
-==================================================
-9. TITRE EBAY
-==================================================
-
-Crée un titre eBay précis.
-
-Maximum 80 caractères.
-
-Utilise les informations réellement identifiées.
-
-==================================================
-10. DESCRIPTION
-==================================================
-
-Rédige une description honnête et exploitable
-directement pour une annonce eBay.
-
-Décris :
-
-- objet
-- marque
-- modèle
-- référence
-- caractéristiques
-- état
-- accessoires
-- défauts visibles
-- particularités
-
-Ne prétends jamais qu'un objet est authentique,
-rare ou complet si cela n'est pas suffisamment certain.
-
-==================================================
-11. CONFIANCE
-==================================================
-
-Indique :
-
-- élevée
-- moyenne
-- faible
-
-selon la précision de l'identification et la disponibilité
-des informations de marché connues.
-
-==================================================
-RÉPONSE
-==================================================
-
-Réponds UNIQUEMENT avec ce JSON valide :
-
-{
-  "objet": "",
-  "categorie": "",
-  "caracteristiques": {
-    "marque": "",
-    "modele": "",
-    "reference": "",
-    "annee": "",
-    "edition": "",
-    "variante": "",
-    "etat": "",
-    "autres": ""
-  },
-  "titre_ebay": "",
-  "description_ebay": "",
-  "prix_estime": "",
-  "prix_mise_en_vente": "",
-  "niveau_confiance": "",
-  "justification_prix": ""
-}
-
-Aucun texte avant ou après le JSON.
-
-==================================================
-RÈGLE FINALE
-==================================================
-
-Ne sous-évalue pas systématiquement les objets.
-
-Ne pars pas automatiquement de la valeur des matériaux.
-
-Ne donne pas automatiquement une petite fourchette.
-
-Cherche à déterminer la valeur réelle de marché
-la plus vraisemblable à partir de l'identification
-précise de l'objet et de tes connaissances du marché.
-
-`;
-
-// ==========================================
-// ANALYSE
-// ==========================================
-
-boutonAnalyser.addEventListener("click", async function () {
-
-  if (!imageBase64) {
-
-    alert("Prends d'abord une photo.");
-
-    return;
-  }
-
-  chargement.style.display = "block";
-
-  resultat.style.display = "none";
-
-  boutonAnalyser.disabled = true;
-
-  chargement.textContent =
-    "🔎 Identification de l'objet…";
-
-  try {
-
-    // ======================================
-    // URL GEMINI
-    // ======================================
-
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/" +
-      MODELE +
-      ":generateContent?key=" +
-      encodeURIComponent(CLE_API);
-
-    // ======================================
-    // APPEL UNIQUE
-    // ======================================
-
-    const reponse = await envoyerRequete(
-
-      url,
-
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-
-          contents: [
-            {
-              parts: [
-
-                {
-                  text: instructions
-                },
-
-                {
-                  inline_data: {
-                    mime_type: mimeType,
-                    data: imageBase64
-                  }
-                }
-
-              ]
-            }
-          ],
-
-          // =================================
-          // IMPORTANT :
-          // AUCUN GOOGLE SEARCH
-          // AUCUN OUTIL PAYANT
-          // =================================
-
-          generationConfig: {
-
-            responseMimeType:
-              "application/json",
-
-            maxOutputTokens: 3500,
-
-            temperature: 0.15
-          }
-
-        })
-      },
-
-      60000
-    );
-
-    const donnees =
-      await reponse.json();
-
-    console.log(
-      "Réponse Gemini :",
-      donnees
-    );
-
-    // ======================================
-    // QUOTA DÉPASSÉ
-    // ======================================
-
-    if (reponse.status === 429) {
-
-      throw new Error(
-        "Le quota gratuit Gemini est actuellement épuisé.\n\n" +
-        "Aucune facturation n'a été déclenchée. " +
-        "Réessaie lorsque le quota gratuit sera de nouveau disponible."
-      );
-    }
-
-    // ======================================
-    // CLÉ REFUSÉE
-    // ======================================
-
-    if (
-      reponse.status === 401 ||
-      reponse.status === 403
-    ) {
-
-      throw new Error(
-        "La clé API Gemini est refusée (" +
-        reponse.status +
-        "). Vérifie la clé utilisée dans app.js."
-      );
-    }
-
-    // ======================================
-    // AUTRE ERREUR
-    // ======================================
-
-    if (!reponse.ok) {
-
-      const message =
-        donnees?.error?.message ||
-        "Erreur Gemini " +
-        reponse.status;
-
-      throw new Error(message);
-    }
-
-    // ======================================
-    // RÉCUPÉRATION DU TEXTE
-    // ======================================
-
-    if (
-      !donnees.candidates ||
-      !donnees.candidates[0] ||
-      !donnees.candidates[0].content ||
-      !donnees.candidates[0].content.parts
-    ) {
-
-      throw new Error(
-        "Gemini n'a pas renvoyé de résultat exploitable."
-      );
-    }
-
-    const parties =
-      donnees.candidates[0].content.parts;
-
-    let texte =
-      parties
-        .filter(function (partie) {
-          return partie.text;
-        })
-        .map(function (partie) {
-          return partie.text;
-        })
-        .join("\n")
-        .trim();
-
-    if (!texte) {
-
-      throw new Error(
-        "Gemini n'a renvoyé aucun résultat."
-      );
-    }
-
-    // ======================================
-    // NETTOYAGE
-    // ======================================
-
-    texte =
-      texte
-        .replace(/^```json\s*/i, "")
-        .replace(/^```\s*/i, "")
-        .replace(/\s*```$/i, "")
-        .trim();
-
-    // ======================================
-    // CONVERSION JSON
-    // ======================================
-
-    let json;
-
-    try {
-
-      json = JSON.parse(texte);
-
-    } catch (erreurJSON) {
-
-      console.error(
-        "Réponse JSON reçue :",
-        texte
-      );
-
-      const debut =
-        texte.indexOf("{");
-
-      const fin =
-        texte.lastIndexOf("}");
-
-      if (
-        debut !== -1 &&
-        fin > debut
-      ) {
-
-        try {
-
-          json = JSON.parse(
-            texte.substring(
-              debut,
-              fin + 1
-            )
-          );
-
-        } catch (erreur2) {
-
-          throw new Error(
-            "La réponse de Gemini n'est pas exploitable."
-          );
-        }
-
-      } else {
-
-        throw new Error(
-          "La réponse de Gemini n'est pas exploitable."
-        );
-      }
-    }
-
-    // ======================================
-    // AFFICHAGE
-    // ======================================
-
-    document.getElementById("titre").value =
-      json.titre_ebay ||
-      "Non disponible";
-
-    document.getElementById("description").value =
-      json.description_ebay ||
-      "Non disponible";
-
-    document.getElementById("prix").value =
-
-      "Estimation de vente : " +
-      (
-        json.prix_estime ||
-        "Non disponible"
-      ) +
-
-      "\n\nPrix de mise en vente conseillé : " +
-      (
-        json.prix_mise_en_vente ||
-        "Non disponible"
-      ) +
-
-      "\n\nNiveau de confiance : " +
-      (
-        json.niveau_confiance ||
-        "Non précisé"
-      ) +
-
-      "\n\nJustification :\n" +
-      (
-        json.justification_prix ||
-        "Non disponible"
-      );
-
-    resultat.style.display = "block";
-
-    // ======================================
-    // CONSOLE
-    // ======================================
-
-    console.log(
-      "Objet identifié :",
-      json.objet
-    );
-
-    console.log(
-      "Catégorie :",
-      json.categorie
-    );
-
-    console.log(
-      "Prix estimé :",
-      json.prix_estime
-    );
-
-    console.log(
-      "Prix mise en vente :",
-      json.prix_mise_en_vente
-    );
-
-  } catch (erreur) {
-
-    console.error(
-      "ERREUR :",
-      erreur
-    );
-
-    alert(
-      "L'analyse n'a pas pu aboutir.\n\n" +
-      erreur.message
-    );
-
-  } finally {
-
-    chargement.style.display =
-      "none";
-
-    boutonAnalyser.disabled =
-      false;
-  }
-});
+NE transforme PAS
