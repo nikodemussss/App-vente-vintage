@@ -1,12 +1,18 @@
-// ================================
+// ==========================================
 // MON ASSISTANT VIDE-GRENIER
-// ================================
+// ==========================================
 
-// ⚠️ Mets ici TA clé API Gemini
+// ⚠️ METS TA CLÉ API GEMINI ENTRE LES GUILLEMETS
 const CLE_API = "AQ.Ab8RN6KtJ7pU6tpg8x4aofAvmA1x1RT9ma_mu1UUShzV_0AD6g";
 
-// Modèle Gemini stable
-const MODELE = "gemini-3.6-flash";
+// Modèles essayés automatiquement, du plus puissant au plus léger
+const MODELES = [
+  "gemini-3.8-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite"
+];
 
 const inputPhoto = document.getElementById("photo");
 const preview = document.getElementById("preview");
@@ -18,9 +24,9 @@ let imageBase64 = null;
 let mimeType = "image/jpeg";
 
 
-// ================================
-// SÉLECTION DE LA PHOTO
-// ================================
+// ==========================================
+// CHOIX DE LA PHOTO
+// ==========================================
 
 inputPhoto.addEventListener("change", function () {
 
@@ -58,11 +64,11 @@ inputPhoto.addEventListener("change", function () {
 });
 
 
-// ================================
-// FONCTION AVEC DÉLAI MAXIMUM
-// ================================
+// ==========================================
+// REQUÊTE AVEC DÉLAI MAXIMUM
+// ==========================================
 
-async function fetchAvecTimeout(url, options, delai = 30000) {
+async function envoyerRequete(url, options, delai = 30000) {
 
   const controleur = new AbortController();
 
@@ -72,12 +78,10 @@ async function fetchAvecTimeout(url, options, delai = 30000) {
 
   try {
 
-    const reponse = await fetch(url, {
+    return await fetch(url, {
       ...options,
       signal: controleur.signal
     });
-
-    return reponse;
 
   } finally {
 
@@ -86,65 +90,61 @@ async function fetchAvecTimeout(url, options, delai = 30000) {
 }
 
 
-// ================================
-// ANALYSE
-// ================================
+// ==========================================
+// INSTRUCTIONS POUR GEMINI
+// ==========================================
 
-boutonAnalyser.addEventListener("click", async function () {
+const instructions = `
+Tu es un expert français en brocante, objets anciens,
+objets de collection, numismatique et vente sur eBay.
 
-  if (!imageBase64) {
-    alert("Prends d'abord une photo.");
-    return;
-  }
+Analyse attentivement la photographie.
 
-  chargement.style.display = "block";
-  chargement.textContent = "🔎 Identification de l'objet…";
+IDENTIFICATION :
 
-  resultat.style.display = "none";
-  boutonAnalyser.disabled = true;
+Identifie l'objet le plus précisément possible.
 
-  const instructions = `
-Tu es un expert français en brocante, objets anciens, collection et vente sur eBay.
-
-Analyse attentivement la photo.
-
-TON PREMIER OBJECTIF EST D'IDENTIFIER L'OBJET LE PLUS PRÉCISÉMENT POSSIBLE.
-
-Pour une monnaie :
+Pour une monnaie, indique notamment :
 - pays
 - valeur faciale
 - année
 - type exact
 - métal
-- poids si le type est connu
-- particularités visibles
+- titre du métal si connu
+- poids théorique si connu
+- particularités
 - état apparent
-- ne confonds jamais une monnaie en argent avec une monnaie courante similaire.
 
 Pour les autres objets :
 - marque
 - modèle
+- référence
 - époque
 - matière
-- référence
 - caractéristiques visibles
-- état apparent.
+- état apparent
 
-NE DEVINE PAS une information qui n'est pas visible ou suffisamment certaine.
+NE PAS INVENTER une information qui n'est pas visible
+ou suffisamment certaine.
 
-Pour le prix, donne une estimation réaliste du prix auquel un particulier peut réellement vendre l'objet en France.
-Ne prends pas comme référence les annonces actuellement en vente à des prix fantaisistes.
-Ne confonds pas prix demandé et prix réellement obtenu.
+PRIX :
 
-Pour les monnaies en métal précieux :
-- tiens compte de la valeur du métal,
-- du titre du métal,
-- du poids,
-- de l'année,
-- de la demande des collectionneurs,
-- et de l'état apparent.
+Donne une estimation réaliste du prix auquel un particulier
+pourrait réellement vendre cet objet en France.
 
-Si l'identification est incertaine, indique-le clairement.
+Ne prends pas simplement comme référence les prix demandés
+dans des annonces très élevées.
+
+Pour une monnaie en métal précieux, prends en compte :
+- le poids
+- le titre du métal
+- la valeur intrinsèque du métal
+- l'année
+- la rareté éventuelle
+- la demande des collectionneurs
+- l'état apparent
+
+Le prix doit correspondre à une vente réaliste entre particuliers.
 
 Réponds UNIQUEMENT avec un JSON valide.
 Aucun texte avant ou après le JSON.
@@ -152,129 +152,277 @@ Aucun texte avant ou après le JSON.
 Format obligatoire :
 
 {
-  "objet": "identification précise de l'objet",
-  "titre_ebay": "titre optimisé pour eBay, maximum 80 caractères",
-  "description_ebay": "description claire et attractive en français",
+  "objet": "identification précise",
+  "titre_ebay": "titre eBay de 80 caractères maximum",
+  "description_ebay": "description détaillée en français",
   "prix_estime": "fourchette réaliste en euros",
-  "justification_prix": "courte explication de l'estimation"
+  "justification_prix": "courte justification du prix"
 }
 `;
 
 
-  const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/" +
-    MODELE +
-    ":generateContent";
+// ==========================================
+// ANALYSE DE LA PHOTO
+// ==========================================
+
+boutonAnalyser.addEventListener("click", async function () {
+
+  if (!imageBase64) {
+
+    alert("Prends d'abord une photo.");
+
+    return;
+  }
+
+
+  chargement.style.display = "block";
+  resultat.style.display = "none";
+  boutonAnalyser.disabled = true;
+
+
+  let dernierErreur = null;
+  let resultatFinal = null;
 
 
   try {
 
-    chargement.textContent = "🔎 Identification de l'objet…";
+    // ======================================
+    // ESSAI DES MODÈLES UN PAR UN
+    // ======================================
+
+    for (let i = 0; i < MODELES.length; i++) {
+
+      const modele = MODELES[i];
+
+      chargement.textContent =
+        "🔎 Analyse avec Gemini " +
+        modele.replace("gemini-", "") +
+        "…";
 
 
-    const reponse = await fetchAvecTimeout(
-      url,
-      {
-        method: "POST",
+      console.log(
+        "Tentative avec le modèle :",
+        modele
+      );
 
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": CLE_API
-        },
 
-        body: JSON.stringify({
+      const url =
+        "https://generativelanguage.googleapis.com/v1beta/models/" +
+        modele +
+        ":generateContent?key=" +
+        encodeURIComponent(CLE_API);
 
-          contents: [
-            {
-              parts: [
 
+      try {
+
+        const reponse = await envoyerRequete(
+          url,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+              contents: [
                 {
-                  text: instructions
-                },
+                  parts: [
 
-                {
-                  inline_data: {
-                    mime_type: mimeType,
-                    data: imageBase64
-                  }
+                    {
+                      text: instructions
+                    },
+
+                    {
+                      inline_data: {
+                        mime_type: mimeType,
+                        data: imageBase64
+                      }
+                    }
+
+                  ]
                 }
+              ],
 
-              ]
-            }
-          ],
+              generationConfig: {
+                maxOutputTokens: 2000
+              }
 
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 2000
+            })
+          },
+          30000
+        );
+
+
+        const donnees = await reponse.json();
+
+
+        console.log(
+          "Réponse Gemini " + modele + " :",
+          donnees
+        );
+
+
+        // ==================================
+        // MODÈLE DISPONIBLE
+        // ==================================
+
+        if (reponse.ok) {
+
+          if (
+            !donnees.candidates ||
+            !donnees.candidates[0] ||
+            !donnees.candidates[0].content ||
+            !donnees.candidates[0].content.parts ||
+            !donnees.candidates[0].content.parts[0]
+          ) {
+
+            throw new Error(
+              "Gemini a répondu sans résultat exploitable."
+            );
           }
 
-        })
-      },
-      30000
-    );
+
+          resultatFinal =
+            donnees.candidates[0]
+              .content
+              .parts[0]
+              .text;
 
 
-    // ================================
-    // LECTURE DE LA RÉPONSE
-    // ================================
-
-    const donnees = await reponse.json();
-
-
-    console.log("Réponse Gemini :", donnees);
+          console.log(
+            "Réponse obtenue avec :",
+            modele
+          );
 
 
-    if (!reponse.ok) {
+          break;
+        }
 
-      const message =
-        donnees?.error?.message ||
-        "Erreur inconnue de Gemini.";
+
+        // ==================================
+        // SERVEUR SATURÉ
+        // ==================================
+
+        if (
+          reponse.status === 503 ||
+          reponse.status === 429 ||
+          reponse.status === 500
+        ) {
+
+          dernierErreur =
+            donnees?.error?.message ||
+            "Serveur momentanément indisponible.";
+
+          console.warn(
+            modele +
+            " indisponible (" +
+            reponse.status +
+            "). Passage au modèle suivant."
+          );
+
+
+          continue;
+        }
+
+
+        // ==================================
+        // CLÉ API INCORRECTE
+        // ==================================
+
+        if (
+          reponse.status === 401 ||
+          reponse.status === 403
+        ) {
+
+          throw new Error(
+            "Clé API refusée par Google (" +
+            reponse.status +
+            "). Vérifie ta clé API Gemini."
+          );
+        }
+
+
+        // ==================================
+        // AUTRE ERREUR
+        // ==================================
+
+        dernierErreur =
+          donnees?.error?.message ||
+          "Erreur Gemini " + reponse.status;
+
+
+      } catch (erreurModele) {
+
+        console.warn(
+          "Erreur avec " + modele + " :",
+          erreurModele
+        );
+
+
+        // Timeout : on passe au modèle suivant
+        if (erreurModele.name === "AbortError") {
+
+          dernierErreur =
+            "Le modèle a dépassé le délai de réponse.";
+
+          continue;
+        }
+
+
+        // Erreur d'authentification :
+        // inutile d'essayer les autres modèles.
+        if (
+          erreurModele.message.includes("401") ||
+          erreurModele.message.includes("403") ||
+          erreurModele.message.includes("Clé API")
+        ) {
+
+          throw erreurModele;
+        }
+
+
+        dernierErreur = erreurModele.message;
+
+        continue;
+      }
+    }
+
+
+    // ======================================
+    // AUCUN MODÈLE N'A RÉPONDU
+    // ======================================
+
+    if (!resultatFinal) {
 
       throw new Error(
-        "Gemini " +
-        reponse.status +
-        " : " +
-        message
+        "Aucun modèle Gemini n'a pu répondre.\n\n" +
+        "Les serveurs sont probablement momentanément saturés.\n\n" +
+        "Dernière erreur : " +
+        (dernierErreur || "inconnue")
       );
     }
 
 
-    if (
-      !donnees.candidates ||
-      !donnees.candidates[0] ||
-      !donnees.candidates[0].content ||
-      !donnees.candidates[0].content.parts ||
-      !donnees.candidates[0].content.parts[0]
-    ) {
-
-      throw new Error(
-        "Gemini a répondu, mais sans résultat exploitable."
-      );
-    }
-
-
-    const texteReponse =
-      donnees.candidates[0].content.parts[0].text;
-
-
-    console.log("Texte Gemini :", texteReponse);
-
-
-    // ================================
+    // ======================================
     // NETTOYAGE DU JSON
-    // ================================
+    // ======================================
 
-    let texteNettoye = texteReponse.trim();
+    let texteNettoye =
+      resultatFinal.trim();
 
-    // Retire les éventuelles balises ```json
-    texteNettoye = texteNettoye
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/\s*```$/i, "")
-      .trim();
+
+    texteNettoye =
+      texteNettoye
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/\s*```$/i, "")
+        .trim();
 
 
     let json;
+
 
     try {
 
@@ -283,26 +431,28 @@ Format obligatoire :
     } catch (erreurJSON) {
 
       console.error(
-        "JSON reçu impossible à lire :",
-        texteReponse
+        "Réponse reçue mais JSON incorrect :",
+        resultatFinal
       );
 
       throw new Error(
-        "Gemini a répondu, mais le résultat n'est pas dans le bon format."
+        "Gemini a répondu, mais son résultat n'est pas exploitable."
       );
     }
 
 
-    // ================================
-    // AFFICHAGE
-    // ================================
+    // ======================================
+    // AFFICHAGE DES RÉSULTATS
+    // ======================================
 
     document.getElementById("titre").value =
-      json.titre_ebay || "Non disponible";
+      json.titre_ebay ||
+      "Non disponible";
 
 
     document.getElementById("description").value =
-      json.description_ebay || "Non disponible";
+      json.description_ebay ||
+      "Non disponible";
 
 
     document.getElementById("prix").value =
@@ -316,24 +466,16 @@ Format obligatoire :
 
   } catch (erreur) {
 
-    console.error("Erreur complète :", erreur);
+    console.error(
+      "ERREUR FINALE :",
+      erreur
+    );
 
 
-    if (erreur.name === "AbortError") {
-
-      alert(
-        "Gemini n'a pas répondu dans les 30 secondes.\n\n" +
-        "Le serveur est probablement très chargé. " +
-        "Réessaie dans quelques instants."
-      );
-
-    } else {
-
-      alert(
-        "L'analyse n'a pas pu aboutir.\n\n" +
-        erreur.message
-      );
-    }
+    alert(
+      "L'analyse n'a pas pu aboutir.\n\n" +
+      erreur.message
+    );
 
 
   } finally {
