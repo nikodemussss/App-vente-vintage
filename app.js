@@ -71,4 +71,3 @@ boutonAnalyser.addEventListener("click", async function () {
     boutonAnalyser.disabled = false;
   }
 });
-```
