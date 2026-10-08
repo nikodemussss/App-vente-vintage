@@ -1,5 +1,5 @@
 // Ta clé API Gemini
-const CLE_API = "AQ.Ab8RN6JQXytS7hWLUib7lM5gPOo9c5K0sV3qQkewnjmlFanNuw";
+const CLE_API = "AQ.Ab8RN6JENVNHJwmJfgi92AoLPMudiokHW-7IEVOmh9wqT-UA2g";
 
 const inputPhoto = document.getElementById("photo");
 const preview = document.getElementById("preview");
