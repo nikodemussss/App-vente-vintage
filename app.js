@@ -1,20 +1,19 @@
 // ==========================================
 // MON ASSISTANT VIDE-GRENIER
-// Identification + recherche du marché réel
-// + estimation basée sur les ventes récentes
+// VERSION 100 % GRATUITE
 // ==========================================
 
-// ⚠️ METS TA CLÉ API GEMINI ICI
+// ⚠️ METS TA CLÉ API ICI
 const CLE_API = "AQ.Ab8RN6KtJ7pU6tpg8x4aofAvmA1x1RT9ma_mu1UUShzV_0AD6g";
 
 // ==========================================
-// MODÈLES GEMINI
+// UN SEUL MODÈLE
 // ==========================================
 
-const MODELES = [
-  "gemini-3.5-flash",
-  "gemini-3.5-flash-lite"
-];
+// On utilise uniquement le modèle léger afin de limiter
+// au maximum la consommation du quota gratuit.
+
+const MODELE = "gemini-3.5-flash-lite";
 
 // ==========================================
 // ÉLÉMENTS DE L'INTERFACE
@@ -37,7 +36,9 @@ inputPhoto.addEventListener("change", function () {
 
   const fichier = inputPhoto.files[0];
 
-  if (!fichier) return;
+  if (!fichier) {
+    return;
+  }
 
   mimeType = fichier.type || "image/jpeg";
 
@@ -60,34 +61,12 @@ inputPhoto.addEventListener("change", function () {
     alert("Impossible de lire la photo.");
 
     imageBase64 = null;
+
     boutonAnalyser.disabled = true;
   };
 
   lecteur.readAsDataURL(fichier);
 });
-
-// ==========================================
-// DATE DU JOUR
-// ==========================================
-
-function obtenirDateISO() {
-
-  const maintenant = new Date();
-
-  return maintenant.toISOString().slice(0, 10);
-}
-
-function obtenirDate90JoursAvant() {
-
-  const date = new Date();
-
-  date.setDate(date.getDate() - 90);
-
-  return date.toISOString().slice(0, 10);
-}
-
-const DATE_DU_JOUR = obtenirDateISO();
-const DATE_90_JOURS_AVANT = obtenirDate90JoursAvant();
 
 // ==========================================
 // TIMEOUT
@@ -120,65 +99,52 @@ async function envoyerRequete(url, options, delai = 60000) {
 
 const instructions = `
 
-Tu es le moteur d'analyse et d'estimation de prix de
-"Mon Assistant Vide-Grenier".
+Tu es l'assistant expert de "Mon Assistant Vide-Grenier".
 
-Tu es un expert français de la brocante, de l'occasion,
-des objets de collection, des antiquités, des jeux vidéo,
-des livres, des jouets, des objets publicitaires,
-de l'électronique, des bijoux, des monnaies,
-des objets de marque et de manière générale de tout objet
-pouvant être vendu entre particuliers.
+Ta mission est d'analyser une photographie d'un objet
+destiné à être vendu entre particuliers.
 
-L'objectif principal est de déterminer COMBIEN CET OBJET
-PEUT RÉELLEMENT SE VENDRE AUJOURD'HUI sur le marché français.
+Tu dois être particulièrement bon pour :
 
-Nous sommes le ${DATE_DU_JOUR}.
-
-La période de référence prioritaire pour les ventes est :
-
-DU ${DATE_90_JOURS_AVANT}
-AU ${DATE_DU_JOUR}
-
-==================================================
-RÈGLE ABSOLUE SUR LE PRIX
-==================================================
-
-NE CALCULE PAS le prix uniquement à partir de ta connaissance
-générale.
-
-NE CALCULE PAS le prix principalement à partir de la valeur
-des matériaux.
-
-NE PRENDS PAS comme référence principale le prix demandé
-par un vendeur.
-
-Le prix doit être déterminé PRIORITAIREMENT à partir du
-MARCHÉ RÉEL et notamment des objets COMPARABLES QUI SE SONT
-RÉELLEMENT VENDUS.
-
-Une annonce actuellement en vente à 80 € ne signifie PAS
-qu'un objet vaut 80 €.
-
-Un objet vendu réellement 42 € est une information beaucoup
-plus importante qu'une annonce actuellement affichée à 80 €.
+- brocante
+- antiquités
+- objets anciens
+- objets de collection
+- monnaies
+- bijoux
+- montres
+- livres
+- BD
+- mangas
+- jeux vidéo
+- jouets
+- figurines
+- objets publicitaires
+- vaisselle
+- décoration
+- mobilier
+- électronique
+- outils
+- objets de marque
+- objets vintage
+- objets du quotidien
+- et tout autre objet identifiable.
 
 ==================================================
-ÉTAPE 1 — IDENTIFICATION VISUELLE
+1. IDENTIFICATION
 ==================================================
-
-Analyse attentivement la photographie.
 
 Identifie l'objet le plus précisément possible.
 
-Cherche notamment :
+Recherche visuellement :
 
-- nature exacte de l'objet
 - marque
 - fabricant
 - modèle
 - référence
-- numéro de modèle
+- numéro
+- inscription
+- logo
 - année
 - époque
 - édition
@@ -186,504 +152,262 @@ Cherche notamment :
 - variante
 - matière
 - couleur
-- dimensions visibles ou estimables
+- forme
+- particularités
 - accessoires
 - emballage
-- signature
-- inscription
-- logo
-- numéro de série
-- particularités
-- état apparent
+- état
 - défauts visibles
-- complétude
 
-NE JAMAIS inventer une information qui n'est pas visible
-ou suffisamment fiable.
+NE JAMAIS inventer une information.
 
-Si une caractéristique n'est pas identifiable, indique-la
-comme inconnue.
+Si une information n'est pas certaine,
+indique qu'elle est inconnue.
 
 ==================================================
-ÉTAPE 2 — CARACTÉRISTIQUES ADAPTÉES À L'OBJET
+2. CARACTÉRISTIQUES ADAPTÉES
 ==================================================
 
-Les caractéristiques à rechercher doivent dépendre
-de l'objet identifié.
+Les caractéristiques importantes dépendent de l'objet.
 
-NE PAS utiliser systématiquement les mêmes critères
-pour toutes les catégories.
-
-Exemples :
-
-MONNAIE :
+Pour une monnaie :
 
 - pays
 - valeur faciale
 - année
 - type
-- variante
 - atelier
+- variante
 - diamètre
 - poids
 - métal
-- titre du métal
+- titre
 - état
-- particularités
 
-JEU VIDÉO :
+Pour un jeu vidéo :
 
 - plateforme
-- titre exact
-- région
+- titre
 - édition
+- région
 - version
-- édition collector éventuelle
-- présence du boîtier
-- présence du manuel
-- présence des accessoires
-- état du disque ou de la cartouche
+- boîte
+- manuel
+- accessoires
+- état du disque
 
-LIVRE :
+Pour un livre :
 
 - auteur
 - titre
 - édition
 - éditeur
 - année
-- numéro d'édition
 - ISBN
 - reliure
+- jaquette
 - état
-- présence éventuelle d'une jaquette
 
-BIJOU :
+Pour un bijou :
 
 - marque
-- modèle
-- matière
 - métal
-- poinçons
+- poinçon
 - pierres
-- poids si connu
+- poids si identifiable
+- modèle
 - époque
 - état
 
-OBJET DE MARQUE :
-
-- marque
-- modèle
-- référence
-- série
-- version
-- époque
-- accessoires
-
-ÉLECTRONIQUE :
+Pour un objet électronique :
 
 - marque
 - modèle
 - référence
 - génération
-- version
 - accessoires
-- état
-- fonctionnement apparent
+- état apparent
 
-OBJET DE COLLECTION :
+Pour tout autre objet :
 
-- fabricant
-- série
-- référence
-- année
-- édition
-- variante
-- état
-- boîte
-- accessoires
-
-Pour tout autre objet, détermine toi-même les
-caractéristiques réellement importantes pour son identification
-et sa valeur.
+détermine toi-même les caractéristiques importantes
+pour identifier correctement le produit et estimer sa valeur.
 
 ==================================================
-ÉTAPE 3 — CONSTRUIRE LES RECHERCHES
+3. ESTIMATION DU MARCHÉ
 ==================================================
 
-Une fois l'objet identifié, construis plusieurs recherches
-Internet spécifiques à CET OBJET.
+L'objectif n'est PAS de donner une cote théorique.
 
-Ne fais PAS une recherche générique du type :
+L'objectif est d'estimer :
 
-"combien vaut cet objet"
+"Combien cet objet pourrait raisonnablement se vendre
+entre particuliers en France ?"
 
-Construis des recherches avec les informations précises
-trouvées sur la photographie.
+Privilégie toujours :
 
-Exemples pour une monnaie :
+1. prix de vente réellement observés lorsque tu en as
+connaissance ;
 
-"10 francs Hercule 1967 vendu"
+2. prix historiques connus ;
 
-"10 francs Hercule 1967 vente réalisée"
+3. prix généralement pratiqués sur le marché de l'occasion ;
 
-"10 francs Hercule 1967 eBay vendu"
+4. cote spécialisée lorsqu'elle est pertinente ;
 
-"10 francs Hercule 1967 eBay vente terminée"
-
-"10 francs Hercule 1967 Catawiki vendu"
-
-"10 francs Hercule 1967 Delcampe"
-
-Exemple pour un jeu :
-
-"Nom exact PS3 vendu"
-
-"Nom exact PS3 eBay vendu"
-
-"Nom exact PS3 sold"
-
-"Nom exact PS3 completed sale"
-
-Exemple pour un objet de marque :
-
-"marque modèle référence vendu"
-
-"marque modèle référence eBay vendu"
-
-"marque modèle référence prix réalisé"
-
-Adapte complètement les recherches à l'objet identifié.
-
-Lorsque c'est pertinent, utilise aussi les termes :
-
-- vendu
-- vente réalisée
-- vendu pour
-- prix réalisé
-- vente terminée
-- enchère terminée
-- sold
-- sold for
-- completed sale
-- completed listing
-
-==================================================
-ÉTAPE 4 — PRIORITÉ AUX VENTES RÉELLES
-==================================================
-
-Classe les informations trouvées selon cette priorité :
-
-NIVEAU 1 — TRÈS IMPORTANT
-
-Objet réellement vendu avec prix identifiable.
-
-Exemples :
-
-- vente eBay terminée avec prix
-- objet vendu sur une marketplace avec prix
-- enchère terminée avec prix final
-- résultat d'enchère avec prix réalisé
-- vente professionnelle avec prix réellement constaté
-
-NIVEAU 2 — IMPORTANT
-
-Vente ancienne mais réellement réalisée lorsque
-les ventes récentes sont rares.
-
-NIVEAU 3 — SECONDAIRE
-
-Annonces actuellement disponibles avec prix demandé.
-
-NIVEAU 4 — INFORMATION COMPLÉMENTAIRE
-
-Cote théorique, guide de prix, catalogue,
-valeur du matériau, etc.
-
-==================================================
-RÈGLE TRÈS IMPORTANTE
-==================================================
+5. valeur des matériaux uniquement comme information
+secondaire.
 
 NE CONFONDS JAMAIS :
 
-"prix demandé"
+prix demandé par un vendeur
 
 avec
 
-"prix réellement vendu".
-
-Si une page indique seulement qu'un vendeur DEMANDE 80 €,
-tu dois la classer comme :
-
-"type": "annonce"
-
-et PAS comme :
-
-"type": "vente réalisée"
-
-Si tu ne peux pas déterminer qu'une vente a réellement
-eu lieu, NE LA PRÉSENTE PAS comme une vente réalisée.
-
-NE FABRIQUE JAMAIS un prix de vente.
+prix auquel l'objet se vend réellement.
 
 ==================================================
-ÉTAPE 5 — PÉRIODE DE 90 JOURS
+4. VALEUR DES MATIÈRES
 ==================================================
 
-Recherche en priorité les ventes réalisées entre :
+Pour l'or, l'argent ou d'autres matières précieuses :
 
-${DATE_90_JOURS_AVANT}
+la valeur du matériau est seulement un élément.
 
-et
+NE transforme PAS automatiquement :
 
-${DATE_DU_JOUR}
+valeur du métal = prix de vente.
 
-Les ventes des 30 derniers jours sont particulièrement
-intéressantes.
+Un objet de collection peut valoir largement plus
+que sa valeur matière.
 
-Les ventes entre 31 et 90 jours restent très pertinentes.
+Exemple :
 
-Si tu trouves très peu de ventes dans les 90 derniers jours,
-tu peux élargir progressivement la recherche jusqu'à
-180 jours.
-
-Pour un objet très rare, tu peux aller plus loin uniquement
-si nécessaire.
-
-Dans ce cas, indique clairement que les données récentes
-sont insuffisantes.
-
-NE mélange pas automatiquement une vente vieille de plusieurs
-années avec des ventes récentes.
-
-Une vente récente doit avoir davantage de poids.
+si une monnaie contient 20 € d'argent mais que son marché
+de collection la place autour de 40 €, l'estimation doit
+être autour de 40 €, pas 20 €.
 
 ==================================================
-ÉTAPE 6 — COMPARABILITÉ
+5. COMPARABILITÉ
 ==================================================
 
-Chaque vente trouvée doit être comparée à L'OBJET
-PHOTOGRAPHIÉ.
+Lorsque tu connais des prix de marché, privilégie les objets :
 
-Écarte les résultats qui concernent :
+- même modèle
+- même référence
+- même année lorsque nécessaire
+- même édition
+- même version
+- même plateforme
+- même taille
+- même matière
+- même état
+- même niveau de complétude
 
-- autre modèle
-- autre référence
-- autre année lorsque l'année est importante
-- autre édition
-- autre version
-- autre plateforme
-- autre taille
-- autre matière
-- autre variante
-- autre quantité
-- autre état
-- objet neuf alors que le nôtre est d'occasion
-- objet incomplet alors que le nôtre est complet
-- lot alors que notre objet est vendu à l'unité
-- contrefaçon ou résultat douteux
-- objet seulement vaguement similaire
-
-La ressemblance visuelle seule ne suffit pas.
+Ne compare pas des objets simplement parce qu'ils
+se ressemblent.
 
 ==================================================
-ÉTAPE 7 — ÉTAT DE L'OBJET
+6. ÉTAT
 ==================================================
 
-Compare l'état apparent de l'objet photographié
-avec celui des objets vendus.
-
-Tiens compte notamment de :
+Estime l'état visible :
 
 - neuf
 - comme neuf
 - très bon état
 - bon état
 - état correct
-- usure
-- rayures
-- défauts
-- boîte
-- emballage
-- manuel
-- accessoires
-- fonctionnement
+- usagé
+- mauvais état
 
-Ne compare pas automatiquement un objet neuf à un objet
-usagé au même prix.
+Mentionne les défauts visibles.
 
 ==================================================
-ÉTAPE 8 — CALCUL DE L'ESTIMATION
+7. FOURCHETTE
 ==================================================
 
-Après avoir trouvé les comparables pertinents :
+Donne une fourchette réaliste.
 
-1. donne davantage de poids aux ventes réellement réalisées ;
+Ne donne pas systématiquement une estimation basse.
 
-2. donne davantage de poids aux ventes récentes ;
+Si un objet vaut probablement 40 à 50 €,
+indique 40 à 50 €.
 
-3. donne davantage de poids aux objets identiques ou
-   presque identiques ;
-
-4. écarte les prix aberrants ;
-
-5. ne laisse pas une annonce actuellement en vente
-   influencer fortement la moyenne ;
-
-6. si plusieurs ventes réelles convergent vers une même
-   zone de prix, considère cette zone comme particulièrement
-   fiable ;
-
-7. utilise une médiane ou une zone centrale des ventes
-   pertinentes plutôt qu'une simple moyenne influencée
-   par des valeurs extrêmes.
-
-L'estimation finale doit représenter :
-
-"combien cet objet peut raisonnablement se vendre
-entre particuliers en France"
-
-et NON :
-
-"quel prix maximum quelqu'un demande pour cet objet".
+Ne cherche pas à être systématiquement prudent
+en sous-évaluant l'objet.
 
 ==================================================
-CAS PARTICULIER DES MATIÈRES PRÉCIEUSES
+8. PRIX EBAY
 ==================================================
 
-Pour une monnaie, un bijou ou un objet contenant de l'or,
-de l'argent ou une autre matière précieuse :
+Donne également un prix de mise en vente conseillé.
 
-la valeur du métal est une INFORMATION SECONDAIRE.
-
-Elle peut servir de contrôle de cohérence.
-
-Elle NE DOIT PAS devenir automatiquement le prix de vente.
-
-Si les ventes réelles montrent qu'un objet se vend
-40 à 50 € alors que sa valeur métal est inférieure,
-l'estimation doit refléter le marché de collection,
-donc environ 40 à 50 €.
-
-NE ramène jamais automatiquement une monnaie à sa valeur
-de fonte.
-
-==================================================
-CAS PARTICULIER DES OBJETS RARES
-==================================================
-
-Si l'objet est rare et qu'il existe peu de ventes récentes :
-
-ne fabrique pas de statistiques.
-
-Indique que les données sont limitées.
-
-Utilise les meilleures références disponibles
-et élargis éventuellement la période.
-
-==================================================
-ÉTAPE 9 — NOMBRE DE COMPARABLES
-==================================================
-
-Indique séparément :
-
-- nombre de ventes réellement réalisées pertinentes
-- nombre d'annonces actuelles pertinentes
-- nombre total de références utilisées
-
-Une estimation basée sur 5 ventes réelles est plus fiable
-qu'une estimation basée sur une seule annonce.
-
-==================================================
-ÉTAPE 10 — PRIX EBAY
-==================================================
-
-Après avoir déterminé le prix de vente probable :
-
-donne un prix de mise en vente conseillé sur eBay.
-
-Ce prix peut être légèrement supérieur au prix de vente
-réel attendu afin de laisser une petite marge de négociation.
-
-Mais il ne doit pas être artificiellement gonflé.
+Il peut être légèrement supérieur au prix de vente
+probable afin de permettre une négociation.
 
 Exemple :
 
-Si les ventes réelles sont principalement entre 38 et 44 € :
+vente probable : 40-45 €
 
-prix de vente probable :
-40–44 €
+mise en vente conseillée : 49,90 €
 
-prix de mise en vente conseillé :
-44,90 €
-
-et non 69,90 € simplement parce qu'une annonce concurrente
-est affichée à 69,90 €.
+Mais ne gonfle pas artificiellement le prix.
 
 ==================================================
-ÉTAPE 11 — TITRE EBAY
+9. TITRE EBAY
 ==================================================
 
-Crée un titre eBay précis et vendeur.
+Crée un titre eBay précis.
 
 Maximum 80 caractères.
 
-Utilise les informations réellement identifiées :
-
-marque + modèle + référence + variante + année
-+ caractéristique importante.
-
-N'invente jamais de mot-clé destiné uniquement à faire
-monter artificiellement le prix.
+Utilise les informations réellement identifiées.
 
 ==================================================
-ÉTAPE 12 — DESCRIPTION EBAY
+10. DESCRIPTION
 ==================================================
 
-Rédige une description claire et honnête en français.
+Rédige une description honnête et exploitable
+directement pour une annonce eBay.
 
-Elle doit reprendre :
+Décris :
 
-- identification de l'objet
+- objet
 - marque
 - modèle
-- référence si connue
-- caractéristiques importantes
+- référence
+- caractéristiques
 - état
 - accessoires
 - défauts visibles
 - particularités
 
-Ne prétends jamais qu'un objet est neuf, authentique,
-rare ou complet si cela n'est pas suffisamment établi.
+Ne prétends jamais qu'un objet est authentique,
+rare ou complet si cela n'est pas suffisamment certain.
 
 ==================================================
-ÉTAPE 13 — CONFIANCE
+11. CONFIANCE
 ==================================================
 
-Donne un niveau de confiance :
+Indique :
 
 - élevée
 - moyenne
 - faible
 
-Une confiance élevée nécessite plusieurs comparables
-réels et pertinents.
+selon la précision de l'identification et la disponibilité
+des informations de marché connues.
 
 ==================================================
-RÉPONSE OBLIGATOIRE
+RÉPONSE
 ==================================================
 
-Réponds UNIQUEMENT avec un JSON valide.
-
-Aucun texte avant le JSON.
-
-Aucun texte après le JSON.
-
-Format obligatoire :
+Réponds UNIQUEMENT avec ce JSON valide :
 
 {
-  "objet": "identification précise",
-  "categorie": "catégorie de l'objet",
+  "objet": "",
+  "categorie": "",
   "caracteristiques": {
     "marque": "",
     "modele": "",
@@ -694,44 +418,30 @@ Format obligatoire :
     "etat": "",
     "autres": ""
   },
-  "titre_ebay": "maximum 80 caractères",
-  "description_ebay": "description détaillée et honnête",
-  "prix_estime": "fourchette réaliste de vente",
-  "prix_mise_en_vente": "prix conseillé",
-  "niveau_confiance": "élevée, moyenne ou faible",
-  "justification_prix": "explication courte basée sur les ventes comparables",
-  "ventes_reelles": "nombre de ventes réellement réalisées pertinentes",
-  "annonces_actuelles": "nombre d'annonces actuellement en vente pertinentes",
-  "nombre_comparables": "nombre total de références pertinentes",
-  "comparables": [
-    {
-      "site": "site",
-      "description": "objet comparable",
-      "prix": "prix",
-      "date": "date ou période si disponible",
-      "type": "vente réalisée, enchère terminée ou annonce",
-      "pertinence": "élevée, moyenne ou faible"
-    }
-  ]
+  "titre_ebay": "",
+  "description_ebay": "",
+  "prix_estime": "",
+  "prix_mise_en_vente": "",
+  "niveau_confiance": "",
+  "justification_prix": ""
 }
+
+Aucun texte avant ou après le JSON.
 
 ==================================================
 RÈGLE FINALE
 ==================================================
 
-AVANT de déterminer le prix final, pose-toi cette question :
+Ne sous-évalue pas systématiquement les objets.
 
-"Si je devais réellement vendre cet objet en France
-aujourd'hui, quel prix est cohérent avec les objets
-IDENTIQUES ou TRÈS COMPARABLES qui se sont réellement
-VENDUS récemment ?"
+Ne pars pas automatiquement de la valeur des matériaux.
 
-C'est cette réponse qui doit déterminer l'estimation.
+Ne donne pas automatiquement une petite fourchette.
 
-La valeur théorique, la cote, la valeur du métal
-ou le prix demandé par un vendeur ne doivent jamais
-remplacer les données de ventes réelles lorsqu'elles
-sont disponibles.
+Cherche à déterminer la valeur réelle de marché
+la plus vraisemblable à partir de l'identification
+précise de l'objet et de tes connaissances du marché.
+
 `;
 
 // ==========================================
@@ -741,470 +451,310 @@ sont disponibles.
 boutonAnalyser.addEventListener("click", async function () {
 
   if (!imageBase64) {
+
     alert("Prends d'abord une photo.");
+
     return;
   }
 
   chargement.style.display = "block";
+
   resultat.style.display = "none";
+
   boutonAnalyser.disabled = true;
 
-  let resultatFinal = null;
-  let dernierErreur = null;
-  let modeleUtilise = null;
+  chargement.textContent =
+    "🔎 Identification de l'objet…";
 
   try {
 
     // ======================================
-    // ESSAI DES MODÈLES
+    // URL GEMINI
     // ======================================
 
-    for (let i = 0; i < MODELES.length; i++) {
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/" +
+      MODELE +
+      ":generateContent?key=" +
+      encodeURIComponent(CLE_API);
 
-      const modele = MODELES[i];
+    // ======================================
+    // APPEL UNIQUE
+    // ======================================
 
-      chargement.textContent =
-        "🔎 Identification + recherche des ventes avec " +
-        modele.replace("gemini-", "") +
-        "…";
+    const reponse = await envoyerRequete(
 
-      console.log("Tentative Gemini :", modele);
+      url,
 
-      const url =
-        "https://generativelanguage.googleapis.com/v1beta/models/" +
-        modele +
-        ":generateContent?key=" +
-        encodeURIComponent(CLE_API);
+      {
+        method: "POST",
 
-      try {
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-        const reponse = await envoyerRequete(
-          url,
-          {
-            method: "POST",
+        body: JSON.stringify({
 
-            headers: {
-              "Content-Type": "application/json"
-            },
+          contents: [
+            {
+              parts: [
 
-            body: JSON.stringify({
-
-              contents: [
                 {
-                  parts: [
-                    {
-                      text: instructions
-                    },
-                    {
-                      inline_data: {
-                        mime_type: mimeType,
-                        data: imageBase64
-                      }
-                    }
-                  ]
-                }
-              ],
+                  text: instructions
+                },
 
-              // ====================================
-              // RECHERCHE GOOGLE
-              // ====================================
-
-              tools: [
                 {
-                  google_search: {}
+                  inline_data: {
+                    mime_type: mimeType,
+                    data: imageBase64
+                  }
                 }
-              ],
 
-              // ====================================
-              // SORTIE JSON
-              // ====================================
+              ]
+            }
+          ],
 
-              generationConfig: {
+          // =================================
+          // IMPORTANT :
+          // AUCUN GOOGLE SEARCH
+          // AUCUN OUTIL PAYANT
+          // =================================
 
-                responseMimeType: "application/json",
+          generationConfig: {
 
-                maxOutputTokens: 8000,
+            responseMimeType:
+              "application/json",
 
-                temperature: 0.2
-              }
+            maxOutputTokens: 3500,
 
-            })
-          },
-
-          60000
-        );
-
-        const donnees = await reponse.json();
-
-        console.log(
-          "Réponse Gemini " + modele + " :",
-          donnees
-        );
-
-        // ====================================
-        // RÉPONSE OK
-        // ====================================
-
-        if (reponse.ok) {
-
-          if (
-            !donnees.candidates ||
-            !donnees.candidates[0] ||
-            !donnees.candidates[0].content ||
-            !donnees.candidates[0].content.parts
-          ) {
-
-            throw new Error(
-              "Gemini a répondu sans résultat exploitable."
-            );
+            temperature: 0.15
           }
 
-          const parties =
-            donnees.candidates[0].content.parts;
+        })
+      },
 
-          resultatFinal = parties
-            .filter(function (partie) {
-              return partie.text;
-            })
-            .map(function (partie) {
-              return partie.text;
-            })
-            .join("\n");
+      60000
+    );
 
-          if (!resultatFinal) {
+    const donnees =
+      await reponse.json();
 
-            throw new Error(
-              "Gemini n'a renvoyé aucun texte exploitable."
-            );
-          }
-
-          modeleUtilise = modele;
-
-          console.log(
-            "Réponse obtenue avec :",
-            modele
-          );
-
-          // Affichage éventuel des informations
-          // de recherche Google dans la console.
-          if (donnees.candidates[0].groundingMetadata) {
-
-            console.log(
-              "Informations de recherche Google :",
-              donnees.candidates[0].groundingMetadata
-            );
-          }
-
-          break;
-        }
-
-        // ====================================
-        // MODÈLE TEMPORAIREMENT INDISPONIBLE
-        // ====================================
-
-        if (
-          reponse.status === 429 ||
-          reponse.status === 500 ||
-          reponse.status === 503
-        ) {
-
-          dernierErreur =
-            donnees?.error?.message ||
-            "Serveur momentanément indisponible.";
-
-          console.warn(
-            modele +
-            " indisponible (" +
-            reponse.status +
-            "). Passage au modèle suivant."
-          );
-
-          continue;
-        }
-
-        // ====================================
-        // CLÉ API
-        // ====================================
-
-        if (
-          reponse.status === 401 ||
-          reponse.status === 403
-        ) {
-
-          throw new Error(
-            "Clé API refusée par Google (" +
-            reponse.status +
-            "). Vérifie ta clé API."
-          );
-        }
-
-        dernierErreur =
-          donnees?.error?.message ||
-          "Erreur Gemini " +
-          reponse.status;
-
-      } catch (erreurModele) {
-
-        console.warn(
-          "Erreur avec " + modele + " :",
-          erreurModele
-        );
-
-        // Timeout
-        if (
-          erreurModele.name === "AbortError"
-        ) {
-
-          dernierErreur =
-            "Le modèle a dépassé 60 secondes.";
-
-          continue;
-        }
-
-        // Erreur de clé
-        if (
-          erreurModele.message.includes("401") ||
-          erreurModele.message.includes("403") ||
-          erreurModele.message.includes("Clé API")
-        ) {
-
-          throw erreurModele;
-        }
-
-        dernierErreur =
-          erreurModele.message;
-
-        continue;
-      }
-    }
+    console.log(
+      "Réponse Gemini :",
+      donnees
+    );
 
     // ======================================
-    // AUCUN MODÈLE N'A RÉPONDU
+    // QUOTA DÉPASSÉ
     // ======================================
 
-    if (!resultatFinal) {
+    if (reponse.status === 429) {
 
       throw new Error(
-        "Aucun modèle Gemini n'a pu répondre.\n\n" +
-        "Dernière erreur : " +
-        (
-          dernierErreur ||
-          "erreur inconnue"
-        )
+        "Le quota gratuit Gemini est actuellement épuisé.\n\n" +
+        "Aucune facturation n'a été déclenchée. " +
+        "Réessaie lorsque le quota gratuit sera de nouveau disponible."
       );
     }
 
     // ======================================
-    // NETTOYAGE DU JSON
+    // CLÉ REFUSÉE
     // ======================================
 
-    let texteNettoye =
-      resultatFinal.trim();
+    if (
+      reponse.status === 401 ||
+      reponse.status === 403
+    ) {
 
-    texteNettoye =
-      texteNettoye
+      throw new Error(
+        "La clé API Gemini est refusée (" +
+        reponse.status +
+        "). Vérifie la clé utilisée dans app.js."
+      );
+    }
+
+    // ======================================
+    // AUTRE ERREUR
+    // ======================================
+
+    if (!reponse.ok) {
+
+      const message =
+        donnees?.error?.message ||
+        "Erreur Gemini " +
+        reponse.status;
+
+      throw new Error(message);
+    }
+
+    // ======================================
+    // RÉCUPÉRATION DU TEXTE
+    // ======================================
+
+    if (
+      !donnees.candidates ||
+      !donnees.candidates[0] ||
+      !donnees.candidates[0].content ||
+      !donnees.candidates[0].content.parts
+    ) {
+
+      throw new Error(
+        "Gemini n'a pas renvoyé de résultat exploitable."
+      );
+    }
+
+    const parties =
+      donnees.candidates[0].content.parts;
+
+    let texte =
+      parties
+        .filter(function (partie) {
+          return partie.text;
+        })
+        .map(function (partie) {
+          return partie.text;
+        })
+        .join("\n")
+        .trim();
+
+    if (!texte) {
+
+      throw new Error(
+        "Gemini n'a renvoyé aucun résultat."
+      );
+    }
+
+    // ======================================
+    // NETTOYAGE
+    // ======================================
+
+    texte =
+      texte
         .replace(/^```json\s*/i, "")
         .replace(/^```\s*/i, "")
         .replace(/\s*```$/i, "")
         .trim();
 
+    // ======================================
+    // CONVERSION JSON
+    // ======================================
+
     let json;
 
     try {
 
-      json = JSON.parse(
-        texteNettoye
-      );
+      json = JSON.parse(texte);
 
     } catch (erreurJSON) {
 
       console.error(
-        "JSON reçu par Gemini :",
-        resultatFinal
+        "Réponse JSON reçue :",
+        texte
       );
 
-      // Tentative de récupération
-      // si Gemini a ajouté quelque chose
-      // malgré la demande JSON.
-
       const debut =
-        texteNettoye.indexOf("{");
+        texte.indexOf("{");
 
       const fin =
-        texteNettoye.lastIndexOf("}");
+        texte.lastIndexOf("}");
 
       if (
         debut !== -1 &&
-        fin !== -1 &&
         fin > debut
       ) {
 
         try {
 
           json = JSON.parse(
-            texteNettoye.substring(
+            texte.substring(
               debut,
               fin + 1
             )
           );
 
-        } catch (deuxiemeErreur) {
+        } catch (erreur2) {
 
           throw new Error(
-            "Gemini a répondu, mais son résultat JSON est invalide."
+            "La réponse de Gemini n'est pas exploitable."
           );
         }
 
       } else {
 
         throw new Error(
-          "Gemini a répondu, mais son résultat n'est pas exploitable."
+          "La réponse de Gemini n'est pas exploitable."
         );
       }
     }
 
     // ======================================
-    // AFFICHAGE DU TITRE
+    // AFFICHAGE
     // ======================================
 
     document.getElementById("titre").value =
       json.titre_ebay ||
       "Non disponible";
 
-    // ======================================
-    // AFFICHAGE DESCRIPTION
-    // ======================================
-
     document.getElementById("description").value =
       json.description_ebay ||
       "Non disponible";
 
-    // ======================================
-    // AFFICHAGE PRIX
-    // ======================================
+    document.getElementById("prix").value =
 
-    let textePrix =
-      "";
-
-    textePrix +=
       "Estimation de vente : " +
       (
         json.prix_estime ||
         "Non disponible"
-      );
+      ) +
 
-    textePrix +=
       "\n\nPrix de mise en vente conseillé : " +
       (
         json.prix_mise_en_vente ||
         "Non disponible"
-      );
+      ) +
 
-    textePrix +=
       "\n\nNiveau de confiance : " +
       (
         json.niveau_confiance ||
         "Non précisé"
-      );
+      ) +
 
-    textePrix +=
-      "\n\nVentes réellement réalisées : " +
-      (
-        json.ventes_reelles ??
-        "Non précisé"
-      );
-
-    textePrix +=
-      "\nAnnonces actuellement en vente : " +
-      (
-        json.annonces_actuelles ??
-        "Non précisé"
-      );
-
-    textePrix +=
-      "\nComparables utilisés : " +
-      (
-        json.nombre_comparables ??
-        "Non précisé"
-      );
-
-    textePrix +=
       "\n\nJustification :\n" +
       (
         json.justification_prix ||
-        "Aucune justification disponible."
+        "Non disponible"
       );
-
-    document.getElementById("prix").value =
-      textePrix;
-
-    // ======================================
-    // AFFICHAGE DU RÉSULTAT
-    // ======================================
 
     resultat.style.display = "block";
 
     // ======================================
-    // CONSOLE POUR CONTRÔLER LES RÉSULTATS
+    // CONSOLE
     // ======================================
 
     console.log(
-      "===================================="
-    );
-
-    console.log(
-      "OBJET IDENTIFIÉ :",
+      "Objet identifié :",
       json.objet
     );
 
     console.log(
-      "CATÉGORIE :",
+      "Catégorie :",
       json.categorie
     );
 
     console.log(
-      "CARACTÉRISTIQUES :",
-      json.caracteristiques
-    );
-
-    console.log(
-      "PRIX ESTIMÉ :",
+      "Prix estimé :",
       json.prix_estime
     );
 
     console.log(
-      "PRIX MISE EN VENTE :",
+      "Prix mise en vente :",
       json.prix_mise_en_vente
-    );
-
-    console.log(
-      "VENTES RÉELLES :",
-      json.ventes_reelles
-    );
-
-    console.log(
-      "ANNONCES :",
-      json.annonces_actuelles
-    );
-
-    console.log(
-      "COMPARABLES :",
-      json.comparables
-    );
-
-    console.log(
-      "MODÈLE UTILISÉ :",
-      modeleUtilise
-    );
-
-    console.log(
-      "===================================="
     );
 
   } catch (erreur) {
 
     console.error(
-      "ERREUR FINALE :",
+      "ERREUR :",
       erreur
     );
 
